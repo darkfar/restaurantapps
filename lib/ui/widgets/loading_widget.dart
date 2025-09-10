@@ -1,6 +1,6 @@
-// lib/ui/widgets/loading_widget.dart
+
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+
 
 class LoadingWidget extends StatelessWidget {
   final String? message;

@@ -23,7 +23,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # Hapus deklarasi assets yang tidak ada foldernya
-  # assets:
-  #   - assets/animations/
-  #   - assets/images/

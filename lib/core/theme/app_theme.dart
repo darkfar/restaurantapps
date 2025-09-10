@@ -22,11 +22,11 @@ class AppTheme {
         secondary: secondaryColor,
         tertiary: accentColor,
         surface: Colors.white,
-        background: Color(0xFFFAFAFA),
+
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: Colors.black87,
-        onBackground: Colors.black87,
+
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
         bodyColor: Colors.black87,
@@ -90,11 +90,11 @@ class AppTheme {
         secondary: secondaryColor,
         tertiary: accentColor,
         surface: darkSecondary,
-        background: darkPrimary,
+
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: Colors.white,
-        onBackground: Colors.white,
+
       ),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
         bodyColor: Colors.white,
@@ -149,7 +149,10 @@ class AppTheme {
   static MaterialColor _createMaterialColor(Color color) {
     List strengths = <double>[.05];
     Map<int, Color> swatch = <int, Color>{};
-    final int r = color.red, g = color.green, b = color.blue;
+    final int r = (color.r * 255.0).round() & 0xff;
+    final int g = (color.g * 255.0).round() & 0xff;
+    final int b = (color.b * 255.0).round() & 0xff;
+
 
     for (int i = 1; i < 10; i++) {
       strengths.add(0.1 * i);

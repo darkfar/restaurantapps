@@ -1,4 +1,4 @@
-// lib/ui/widgets/review_dialog.dart
+
 import 'package:flutter/material.dart';
 
 class ReviewDialog extends StatefulWidget {

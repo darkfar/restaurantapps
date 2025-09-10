@@ -1,4 +1,4 @@
-// lib/ui/widgets/description_widget.dart
+
 import 'package:flutter/material.dart';
 import 'package:readmore/readmore.dart';
 

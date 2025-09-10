@@ -1,9 +1,8 @@
-// lib/providers/restaurant_provider.dart
+
 import 'package:flutter/material.dart';
 import '../data/models/api_response.dart';
 import '../data/models/restaurant.dart';
 import '../data/models/restaurant_detail.dart';
-import '../data/models/customer_review.dart' as review_model;
 import '../data/services/api_service.dart';
 
 class RestaurantProvider extends ChangeNotifier {

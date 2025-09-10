@@ -1,4 +1,4 @@
-// lib/data/models/customer_review.dart
+
 class CustomerReview {
   final String name;
   final String review;

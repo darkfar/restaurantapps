@@ -1,4 +1,4 @@
-// lib/data/models/restaurant_detail.dart
+
 class RestaurantDetail {
   final String id;
   final String name;
