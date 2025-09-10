@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/restaurant_provider.dart';
+import 'providers/theme_provider.dart';
 import 'ui/pages/home_page.dart';
 
 void main() {
@@ -32,21 +33,5 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-  }
-}
-
-// ThemeProvider class
-class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false;
-  bool get isDarkMode => _isDarkMode;
-
-  void toggleTheme() {
-    _isDarkMode = !_isDarkMode;
-    notifyListeners();
-  }
-
-  void setTheme(bool isDark) {
-    _isDarkMode = isDark;
-    notifyListeners();
   }
 }

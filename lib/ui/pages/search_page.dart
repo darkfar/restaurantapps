@@ -1,11 +1,11 @@
 // lib/ui/pages/search_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/restaurant_provider.dart';
 import '../../data/models/api_response.dart';
-import '../widgets/restaurant_card.dart';
-import '../widgets/loading_widget.dart';
+import '../../data/models/restaurant.dart';
+import '../../providers/restaurant_provider.dart';
 import '../widgets/error_widget.dart';
+import '../widgets/restaurant_card.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -15,106 +15,67 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _searchController = TextEditingController();
+  final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<RestaurantProvider>(context, listen: false);
-    _searchController.text = provider.lastSearchQuery;
+    // Clear previous search when entering search page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<RestaurantProvider>(context, listen: false).clearSearch();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
-  }
-
-  void _performSearch(String query) {
-    if (query.trim().isNotEmpty) {
-      Provider.of<RestaurantProvider>(context, listen: false)
-          .searchRestaurants(query.trim());
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Restaurants'),
+        title: const Text('Cari Restoran'),
       ),
       body: Column(
         children: [
           // Search Bar
-          Padding(
+          Container(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
+              focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: 'Search restaurants, food, or drinks...',
+                hintText: 'Cari restoran favorit Anda...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear),
                   onPressed: () {
                     _searchController.clear();
-                    Provider.of<RestaurantProvider>(context, listen: false)
-                        .clearSearch();
+                    _onSearchChanged('');
                   },
+                  icon: const Icon(Icons.clear),
                 )
                     : null,
               ),
-              textInputAction: TextInputAction.search,
-              onSubmitted: _performSearch,
-              onChanged: (value) {
-                setState(() {});
-                if (value.isEmpty) {
-                  Provider.of<RestaurantProvider>(context, listen: false)
-                      .clearSearch();
-                }
-              },
+              onChanged: _onSearchChanged,
+              onSubmitted: _onSearchSubmitted,
             ),
           ),
-
-          // Search Button
-          if (_searchController.text.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _performSearch(_searchController.text),
-                  icon: const Icon(Icons.search),
-                  label: const Text('Search'),
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 16),
-
           // Search Results
           Expanded(
             child: Consumer<RestaurantProvider>(
               builder: (context, provider, child) {
-                return switch (provider.searchState) {
-                  Loading() => const LoadingWidget(message: 'Searching restaurants...'),
-                  Success(data: final restaurants) => restaurants.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: restaurants.length,
-                    itemBuilder: (context, index) {
-                      return RestaurantCard(
-                        restaurant: restaurants[index],
-                        heroTag: 'search_restaurant_${restaurants[index].id}',
-                      );
-                    },
-                  ),
-                  Error(message: final message) => CustomErrorWidget(
-                    message: message,
-                    onRetry: () => _performSearch(_searchController.text),
-                  ),
-                };
+                // Show initial search prompt
+                if (!provider.hasSearched) {
+                  return _buildSearchPrompt();
+                }
+
+                // Show search results
+                return _buildSearchResults(provider);
               },
             ),
           ),
@@ -123,42 +84,133 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    final hasQuery = _searchController.text.trim().isNotEmpty;
-
+  Widget _buildSearchPrompt() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              hasQuery ? Icons.search_off : Icons.restaurant_menu,
-              size: 64,
-              color: Colors.grey[400],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Cari Restoran',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
             ),
-            const SizedBox(height: 16),
-            Text(
-              hasQuery
-                  ? 'No restaurants found'
-                  : 'Start searching',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.grey[600],
-              ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Masukkan nama restoran yang ingin Anda cari',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
             ),
-            const SizedBox(height: 8),
-            Text(
-              hasQuery
-                  ? 'Try searching with different keywords'
-                  : 'Search for restaurants, food, or drinks',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              _focusNode.requestFocus();
+            },
+            icon: const Icon(Icons.search),
+            label: const Text('Mulai Pencarian'),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildSearchResults(RestaurantProvider provider) {
+    switch (provider.searchState) {
+      case Loading<List<Restaurant>>():
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Mencari restoran...'),
+            ],
+          ),
+        );
+
+      case Success<List<Restaurant>>(data: final restaurants):
+        if (restaurants.isEmpty && provider.lastSearchQuery.isNotEmpty) {
+          return _buildNoResults();
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: restaurants.length,
+          itemBuilder: (context, index) {
+            return RestaurantCard(restaurant: restaurants[index]);
+          },
+        );
+
+      case Error<List<Restaurant>>(message: final message):
+        return CustomErrorWidget(
+          error: message,
+          title: 'Pencarian Gagal',
+          onRetry: () => _onSearchSubmitted(provider.lastSearchQuery),
+        );
+    }
+  }
+
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Tidak Ditemukan',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tidak ada restoran yang cocok dengan pencarian "${Provider.of<RestaurantProvider>(context, listen: false).lastSearchQuery}"',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              _searchController.clear();
+              Provider.of<RestaurantProvider>(context, listen: false).clearSearch();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Cari Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {});
+  }
+
+  void _onSearchSubmitted(String query) {
+    if (query.trim().isNotEmpty) {
+      Provider.of<RestaurantProvider>(context, listen: false)
+          .searchRestaurants(query.trim());
+    }
   }
 }

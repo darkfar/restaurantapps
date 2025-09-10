@@ -15,7 +15,7 @@ class RestaurantProvider extends ChangeNotifier {
   ApiResponse<RestaurantDetail> _restaurantDetailState = Loading<RestaurantDetail>();
   ApiResponse<RestaurantDetail> get restaurantDetailState => _restaurantDetailState;
 
-  ApiResponse<List<Restaurant>> _searchState = Loading<List<Restaurant>>();
+  ApiResponse<List<Restaurant>> _searchState = Success<List<Restaurant>>([]);
   ApiResponse<List<Restaurant>> get searchState => _searchState;
 
   bool _isAddingReview = false;
@@ -23,6 +23,9 @@ class RestaurantProvider extends ChangeNotifier {
 
   String _lastSearchQuery = '';
   String get lastSearchQuery => _lastSearchQuery;
+
+  bool _hasSearched = false;
+  bool get hasSearched => _hasSearched;
 
   // Get restaurant list
   Future<void> fetchRestaurantList() async {
@@ -33,7 +36,7 @@ class RestaurantProvider extends ChangeNotifier {
       final restaurants = await _apiService.getRestaurantList();
       _restaurantListState = Success<List<Restaurant>>(restaurants);
     } catch (e) {
-      _restaurantListState = Error<List<Restaurant>>(e.toString());
+      _restaurantListState = Error<List<Restaurant>>(_getErrorMessage(e));
     }
     notifyListeners();
   }
@@ -47,7 +50,7 @@ class RestaurantProvider extends ChangeNotifier {
       final restaurant = await _apiService.getRestaurantDetail(id);
       _restaurantDetailState = Success<RestaurantDetail>(restaurant);
     } catch (e) {
-      _restaurantDetailState = Error<RestaurantDetail>(e.toString());
+      _restaurantDetailState = Error<RestaurantDetail>(_getErrorMessage(e));
     }
     notifyListeners();
   }
@@ -55,8 +58,11 @@ class RestaurantProvider extends ChangeNotifier {
   // Search restaurants
   Future<void> searchRestaurants(String query) async {
     _lastSearchQuery = query;
+    _hasSearched = true;
+
     if (query.isEmpty) {
       _searchState = Success<List<Restaurant>>([]);
+      _hasSearched = false;
       notifyListeners();
       return;
     }
@@ -68,7 +74,7 @@ class RestaurantProvider extends ChangeNotifier {
       final restaurants = await _apiService.searchRestaurants(query);
       _searchState = Success<List<Restaurant>>(restaurants);
     } catch (e) {
-      _searchState = Error<List<Restaurant>>(e.toString());
+      _searchState = Error<List<Restaurant>>(_getErrorMessage(e));
     }
     notifyListeners();
   }
@@ -122,6 +128,26 @@ class RestaurantProvider extends ChangeNotifier {
   void clearSearch() {
     _searchState = Success<List<Restaurant>>([]);
     _lastSearchQuery = '';
+    _hasSearched = false;
     notifyListeners();
+  }
+
+  // Helper method untuk error message yang user-friendly
+  String _getErrorMessage(dynamic error) {
+    String errorString = error.toString().toLowerCase();
+
+    if (errorString.contains('network') || errorString.contains('connection')) {
+      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+    } else if (errorString.contains('timeout')) {
+      return 'Koneksi timeout. Silakan coba lagi.';
+    } else if (errorString.contains('404')) {
+      return 'Data tidak ditemukan.';
+    } else if (errorString.contains('500')) {
+      return 'Server sedang bermasalah. Coba lagi nanti.';
+    } else if (errorString.contains('failed to load')) {
+      return 'Gagal memuat data. Silakan coba lagi.';
+    } else {
+      return 'Terjadi kesalahan. Silakan coba lagi.';
+    }
   }
 }
