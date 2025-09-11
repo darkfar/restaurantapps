@@ -4,7 +4,7 @@ import '../data/models/api_response.dart';
 import '../data/models/restaurant.dart';
 import '../data/models/restaurant_detail.dart';
 import '../data/services/api_service.dart';
-
+import 'dart:async';
 class RestaurantProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
 
