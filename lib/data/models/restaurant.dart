@@ -1,3 +1,4 @@
+// lib/data/models/restaurant.dart (Fixed)
 class Restaurant {
   final String id;
   final String name;
@@ -24,5 +25,16 @@ class Restaurant {
       city: json['city'] ?? '',
       rating: (json['rating'] ?? 0).toDouble(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'pictureId': pictureId,
+      'city': city,
+      'rating': rating,
+    };
   }
 }

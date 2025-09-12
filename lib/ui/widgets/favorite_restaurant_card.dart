@@ -1,17 +1,20 @@
-// lib/ui/widgets/restaurant_card.dart (Updated)
+// lib/ui/widgets/favorite_restaurant_card.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
 import '../../data/models/restaurant.dart';
 import '../../data/services/api_service.dart';
-import '../../providers/favorite_provider.dart';
 import '../pages/restaurant_detail_page.dart';
 import 'description_widget.dart';
 
-class RestaurantCard extends StatelessWidget {
+class FavoriteRestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
+  final VoidCallback? onRemoved;
 
-  const RestaurantCard({super.key, required this.restaurant});
+  const FavoriteRestaurantCard({
+    super.key,
+    required this.restaurant,
+    this.onRemoved,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +45,10 @@ class RestaurantCard extends StatelessWidget {
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: CachedNetworkImage(
-                      imageUrl: ApiService.getImageUrl(restaurant.pictureId, size: ImageSize.medium),
+                      imageUrl: ApiService.getImageUrl(
+                        restaurant.pictureId,
+                        size: ImageSize.medium,
+                      ),
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: Colors.grey[300],
@@ -68,65 +74,65 @@ class RestaurantCard extends StatelessWidget {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Consumer<FavoriteProvider>(
-                    builder: (context, favoriteProvider, child) {
-                      final isFavorite = favoriteProvider.isFavorite(restaurant.id);
-
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: isFavorite ? Colors.red : Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        child: InkWell(
-                          onTap: () async {
-                            try {
-                              await favoriteProvider.toggleFavorite(restaurant);
+                      ],
+                    ),
+                    child: InkWell(
+                      onTap: onRemoved,
+                      borderRadius: BorderRadius.circular(20),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.favorite,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
-                              if (context.mounted) {
-                                final message = isFavorite
-                                    ? '${restaurant.name} dihapus dari favorit'
-                                    : '${restaurant.name} ditambahkan ke favorit';
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(message),
-                                    backgroundColor: isFavorite ? Colors.orange : Colors.green,
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Gagal mengubah status favorit'),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Icon(
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: isFavorite ? Colors.white : Colors.red,
-                              size: 20,
-                            ),
+                // Favorite Label
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.favorite,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Favorit',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -216,6 +222,46 @@ class RestaurantCard extends StatelessWidget {
                       fontSize: 14,
                       height: 1.4,
                     ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RestaurantDetailPage(
+                                  restaurantId: restaurant.id,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.info_outline),
+                          label: const Text('Detail'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                            side: BorderSide(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: onRemoved,
+                        icon: const Icon(Icons.remove_circle_outline),
+                        label: const Text('Hapus'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
